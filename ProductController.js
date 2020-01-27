@@ -1,5 +1,7 @@
 const Category = require('../models/Category')
 const Product = require('../models/Product')
+const File = require('../models/File')
+
 
 const { formatPrice } = require('../../lib/utils')
 
@@ -19,26 +21,25 @@ module.exports = {
   },
   async post(req, res) {
     //Lógica de Salvar
-    const keys = Object.keys(req.body)
+      const keys = Object.keys(req.body)
 
-    for(key of keys) {
-      if (req.body[key] == "") {
-        return res.send('Please, fill all fields!')
+      for(key of keys) {
+          if (req.body[key] == "") {
+              return res.send('Please, fill all fields!')
+          }
       }
-    }
 
-    if (req.files.lenght == 0){
-      return res.send('Please, send at least one image')
-    }
+      if (req.files.length == 0)
+          return res.send('Please, send at least one image')
 
 
-    let results = await Product.create(req.body)
-    const productId = results.rows[0].id
+      let results = await Product.create(req.body)
+      const productId = results.rows[0].id
 
-    const filesPromise = req.files.map(file => File.create({...file, product_id: productId}))
-    await Promise.all(filesPromise)
+      const filesPromise = req.files.map(file => File.create({...file, product_id: productId}))
+      await Promise.all(filesPromise)
 
-    return res.redirect(`/products/${productId}/edit`)
+      return res.redirect(`/products/${productId}/edit`)
 
   },
   async edit(req, res) {
