@@ -3,7 +3,7 @@ function onlyUsers(req, res, next) {
       return res.redirect('/users/login')
 
   next()
-},
+}
 
 function isLoggedRedirectToUsers(req, res, next) {
   if (req.session.userId) {
