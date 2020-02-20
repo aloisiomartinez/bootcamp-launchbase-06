@@ -28,13 +28,13 @@ async function show(req, res, next) {
     next()
 }
 async function post(req, res, next) {
-    //check if has all fields
+    //Verificar se todos os campos foram preenchidos
     const fillAllFields = checkAllFields(req.body)
     if (fillAllFields) {
       return res.render("user/register", fillAllFields)
     }
 
-    //check if user exists [email, cpf_cnpj]
+    //Verificar se o usuário existe [email, cpf_cnpj]
     let { email, cpf_cnpj, password, passwordRepeat} = req.body
 
     cpf_cnpj = cpf_cnpj.replace(/\D/g, "")
@@ -49,7 +49,7 @@ async function post(req, res, next) {
         error: 'Usuário já cadastrado.'
     })
 
-    //check if password match
+    //Verificar se as senhas conferem
     if (password != passwordRepeat) return res.render('user/register', {
         user: req.body,
         error: 'A senha e a repetição da senha estão incorretas.'

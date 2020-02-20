@@ -1,5 +1,6 @@
 const User = require('../models/User')
 
+const { hash } = require('bcryptjs')
 const crypto = require('crypto') // Módulo do node para criar um token
 const mailer = require('../../lib/mailer')
 
@@ -59,9 +60,43 @@ module.exports = {
 
     }catch(err) {
         console.error(err)
-        return res.render("seession/forgot-password", {
+        return res.render("session/forgot-password", {
           error: "Erro inesperado, tente novamente!"
         })
+    }
+  },
+  resetForm(req, res) {
+    return res.render("session/password-reset", {token: req.query.token})
+  },
+  async reset(req, res) {
+    const user = req.user // Pega do validator/session
+    const { password, token } = req.body
+    
+    try{
+      //Criar novo hash de senha
+      const newPassword = await hash(password, 8)
+
+      //Atualizar usuário
+      await User.update(user.id, {
+        password: newPassword,
+        reset_token: "",
+        reset_token_expires: ""
+      })
+      
+      //Avisar o usuário sobre a nova senha
+      return res.render("session/login", {
+        user:req.body,
+        sucess: "Senha atualizada! Faça o seu login"
+      })
+      
+
+    }catch(err) {
+      console.error(err)
+      return res.render("session/password-reset", {
+        user: req.body,
+        token,
+        error: "Erro inesperado, tente novamente!"
+      })
     }
   }
 }
