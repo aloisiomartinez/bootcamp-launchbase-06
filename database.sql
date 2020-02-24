@@ -1,3 +1,6 @@
+DROP SCHEMA public CASCADE;
+CREATE SCHEMA public;
+
 DROP DATABASE IF EXISTS launchstoredb;
 CREATE DATABASE launchstoredb;
 
@@ -84,3 +87,28 @@ ALTER TABLE "session" ADD CONSTRAINT "session_pkey" PRIMARY KEY ("sid") NOT DEFE
 -- token password recobery
 ALTER TABLE "users" ADD COLUMN reset_token text;
 ALTER TABLE "users" ADD COLUMN reset_token_expires text;
+
+-- cascade effect when delete user and products
+ALTER TABLE "products"
+DROP CONSTRAINT products_user_id_fkey,
+ADD CONSTRAINT products_user_id_fkey
+FOREIGN KEY ("user_id")
+REFERENCES "users" ("id")
+ON DELETE CASCADE;
+
+ALTER TABLE "files"
+DROP CONSTRAINT files_product_id_fkey,
+ADD CONSTRAINT files_product_id_fkey
+FOREIGN KEY ("product_id")
+REFERENCES "products" ("id")
+ON DELETE CASCADE;
+
+-- to run seeds
+DELETE FROM products;
+DELETE FROM users;
+DELETE FROM files;
+
+--retart sequence auto_increment from tables ids
+ALTER SEQUENCE products_id_seq RESTART WITH 1;
+ALTER SEQUENCE users_id_seq RESTART WITH 1;
+ALTER SEQUENCE files_id_seq RESTART WITH 1;
