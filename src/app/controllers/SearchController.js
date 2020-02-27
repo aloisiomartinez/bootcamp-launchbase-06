@@ -1,65 +1,43 @@
 const Product = require('../models/Product')
-
-const { formatPrice } = require('../../lib/utils')
+const LoadProductsService = require('../services/LoadProductService')
 
 module.exports = { 
-  async index(req, res) {
-    try {
-      let results,
-          params = {}
+    async index(req, res) {
+        try {
+            let { filter, category } = req.query
 
-      const { filter, category } = req.query
+            if ( !filter || filter.toLowerCase() == 'toda a loja' ) filter = null
 
-      if (!filter) return res.redirect("/")
+            let products = await Product.search({filter, category})
 
-      params.filter = filter
+            const productsPromise = products.map(LoadProductsService.format)
 
-      if (category) {
-        params.category = category
-      }
+            products = await Promise.all(productsPromise)
 
-      let products = await Product.search(params)
+            const search = {
+                term: filter || 'Toda a loja',
+                total: products.length
+            }
 
-      async function getImage(productId) {
-        let files = await Product.files(productId)
-        files = files.map(file => `${req.protocol}://${req.headers.host}${file.path.replace("public", "")}`)
+            const categories = products.map(product => ({
+                id: product.category_id,
+                name: product.category_name
+            })).reduce((categoriesFiltered, category) => { // Recursão
 
-        return files[0]
-      }
+            const found = categoriesFiltered.some(cat => cat.id == category.id)
 
-      const productsPromise = products.map(async product => {
-        product.img = await getImage(product.id)
-        product.oldPrice = formatPrice(product.old_price)
-        product.price = formatPrice(product.price)
-        return product
-      })
+            if (!found)
+                categoriesFiltered.push(category)
 
-      products = await Promise.all(productsPromise)
-
-      const search = {
-        term: req.query.filter,
-        total: products.lenght
-      }
-
-      const categories = products.map(product => ({
-        id: product.category_id,
-        name: product.category_name
-      })).reduce((categoriesFiltered, category) => { // Recursão
-
-        const found = categoriesFiltered.some(cat => cat.id == category.id)
-
-        if (!found)
-          categoriesFiltered.push(category)
-
-        return categoriesFiltered
-      }, []) //[{id}]
-
-      return res.render("search/index", { products, search, categories })
+                return categoriesFiltered
+            }, [])
 
 
-      }
-      catch(err) {
-           console.error(err)
-      }    
+            return res.render("search/index", { products, search, categories })
+        }
+        catch(err) {
+            console.error(err)
+        }
+        
     }
 }
